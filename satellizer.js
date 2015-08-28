@@ -6,7 +6,7 @@
 (function(window, angular, undefined) {
   'use strict';
 
-  angular.module('satellizer', [])
+  angular.module('satellizer', ['LocalStorageModule'])
     .constant('SatellizerConfig', {
       httpInterceptor: true,
       withCredentials: true,
@@ -795,37 +795,11 @@
         return result;
       }
     })
-    .factory('SatellizerStorage', ['$window', 'SatellizerConfig', function($window, config) {
-      var isStorageAvailable = (function() {
-        try {
-          var supported = config.storageType in $window && $window[config.storageType] !== null;
-
-          if (supported) {
-            var key = Math.random().toString(36).substring(7);
-            $window[config.storageType].setItem(key, '');
-            $window[config.storageType].removeItem(key);
-          }
-
-          return supported;
-        } catch (e) {
-          return false;
-        }
-      })();
-
-      if (!isStorageAvailable) {
-        console.warn('Satellizer Warning: ' + config.storageType + ' is not available.');
-      }
-
+    .factory('SatellizerStorage', ['$window', 'SatellizerConfig', 'localStorageService', function($window, config, localStorageService) {
       return {
-        get: function(key) {
-          return isStorageAvailable ? $window[config.storageType].getItem(key) : undefined;
-        },
-        set: function(key, value) {
-          return isStorageAvailable ? $window[config.storageType].setItem(key, value) : undefined;
-        },
-        remove: function(key) {
-          return isStorageAvailable ? $window[config.storageType].removeItem(key): undefined;
-        }
+        get: localStorageService.get,
+        set: localStorageService.set,
+        remove: localStorageService.remove
       };
     }])
     .factory('SatellizerInterceptor', [
@@ -858,8 +832,11 @@
           }
         };
       }])
-    .config(['$httpProvider', function($httpProvider) {
-      $httpProvider.interceptors.push('SatellizerInterceptor');
-    }]);
+    .config(satellizerInjectConfig);
 
+    function satellizerInjectConfig($httpProvider, config, localStorageService) {
+        $httpProvider.interceptors.push('SatellizerInterceptor');
+        localStorageService.setPrefix(config.tokenPrefix);
+        localStorageService.setStorageType(config.storageType);
+    }
 })(window, window.angular);
