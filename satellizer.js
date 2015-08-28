@@ -833,8 +833,9 @@
         };
       }])
     .config(satellizerInjectConfig);
+    satellizerInjectConfig.$inject = ['$httpProvider', 'SatellizerConfig', 'localStorageServiceProvider'];
 
-    function satellizerInjectConfig($httpProvider, config, localStorageService) {
+    function satellizerInjectConfig($httpProvider, SatellizerConfig, localStorageService) {
         $httpProvider.interceptors.push('SatellizerInterceptor');
         localStorageService.setPrefix(config.tokenPrefix);
         localStorageService.setStorageType(config.storageType);
