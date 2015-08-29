@@ -236,6 +236,10 @@
             shared.setToken({ access_token: token });
           };
 
+          $auth.isTokenExpired = function() {
+            return shared.isTokenExpired();
+          };
+
           $auth.removeToken = function() {
             return shared.removeToken();
           };
@@ -302,6 +306,20 @@
 
         Shared.removeToken = function() {
           storage.remove(tokenName);
+        };
+
+        Shared.isTokenExpired = function() {
+          var token = storage.get(tokenName);
+          if (token.split('.').length === 3) {
+            var base64Url = token.split('.')[1];
+            var base64 = base64Url.replace('-', '+').replace('_', '/');
+            var exp = JSON.parse($window.atob(base64)).exp;
+
+            if (exp) {
+              return Math.round(new Date().getTime() / 1000) >= exp;
+            }
+          }
+          return false;
         };
 
         /**
@@ -840,5 +858,8 @@
         $httpProvider.interceptors.push('SatellizerInterceptor');
         localStorageServiceProvider.setPrefix(SatellizerConfig.tokenPrefix);
         localStorageServiceProvider.setStorageType(SatellizerConfig.storageType);
+        if (!localStorageServiceProvider.isSupported) {
+            localStorageServiceProvider.setStorageType('Cookie');
+        }
     }
 })(window, window.angular);
