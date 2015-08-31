@@ -857,9 +857,5 @@
     function satellizerInjectConfig($httpProvider, SatellizerConfig, localStorageServiceProvider) {
         $httpProvider.interceptors.push('SatellizerInterceptor');
         localStorageServiceProvider.setPrefix(SatellizerConfig.tokenPrefix);
-        localStorageServiceProvider.setStorageType(SatellizerConfig.storageType);
-        if (!localStorageServiceProvider.isSupported) {
-            localStorageServiceProvider.setStorageType('Cookie');
-        }
     }
 })(window, window.angular);
