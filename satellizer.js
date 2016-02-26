@@ -486,7 +486,7 @@
             if (config.cordova) {
               openPopup = popup.open(url, defaults.name, defaults.popupOptions, defaults.redirectUri).eventListener(defaults.redirectUri);
             } else {
-              openPopup = popup.open(url, defaults.name, defaults.popupOptions, defaults.redirectUri).pollPopup();
+              openPopup = popup.open(url, defaults.name, defaults.popupOptions, defaults.redirectUri).pollPopup(defaults.redirectUri);
             }
 
             return openPopup
@@ -601,7 +601,7 @@
                   popupWindow.popupWindow.location = [defaults.authorizationEndpoint, Oauth1.buildQueryString(response.data)].join('?');
                 }
 
-                var popupListener = config.cordova ? popupWindow.eventListener(defaults.redirectUri) : popupWindow.pollPopup();
+                var popupListener = config.cordova ? popupWindow.eventListener(defaults.redirectUri) : popupWindow.pollPopup(defaults.redirectUri);
 
                 return popupListener
                   .then(function(response) {
