@@ -694,39 +694,48 @@
           return deferred.promise;
         };
 
-        Popup.pollPopup = function() {
+	   Popup.pollPopup = function(redirectUri) {
           var deferred = $q.defer();
-
+          var redirectUriParser = document.createElement('a');
+          redirectUriParser.href = redirectUri;
+          var redirectUriPath = utils.getFullUrlPath(redirectUriParser);
           var polling = $interval(function() {
+            if (!Popup.popupWindow || Popup.popupWindow.closed || Popup.popupWindow.closed === undefined) {
+              deferred.reject('The popup window was closed.');
+              $interval.cancel(polling);
+            }
             try {
-              var documentOrigin = document.location.host;
-              var popupWindowOrigin = Popup.popupWindow.location.host;
-
-              if (popupWindowOrigin === documentOrigin && (Popup.popupWindow.location.search || Popup.popupWindow.location.hash)) {
-                var queryParams = Popup.popupWindow.location.search.substring(1).replace(/\/$/, '');
-                var hashParams = Popup.popupWindow.location.hash.substring(1).replace(/[\/$]/, '');
-                var hash = utils.parseQueryString(hashParams);
-                var qs = utils.parseQueryString(queryParams);
-
-                angular.extend(qs, hash);
-
-                if (!qs.error) {
-                  deferred.resolve(qs);
+              var popupWindowPath = utils.getFullUrlPath(Popup.popupWindow.location);
+              // Redirect has occurred.
+              if (popupWindowPath === redirectUriPath) {
+                // Contains query/hash parameters as expected.
+                if (Popup.popupWindow.location.search || Popup.popupWindow.location.hash) {
+                  var queryParams = Popup.popupWindow.location.search.substring(1).replace(/\/$/, '');
+                  var hashParams = Popup.popupWindow.location.hash.substring(1).replace(/[\/$]/, '');
+                  var hash = utils.parseQueryString(hashParams);
+                  var qs = utils.parseQueryString(queryParams);
+                  angular.extend(qs, hash);
+                  if (qs.error) {
+                    deferred.reject(qs);
+                  } else {
+                    deferred.resolve(qs);
+                  }
+                } else {
+                  // Does not contain query/hash parameters, can't do anything at this point.
+                  deferred.reject(
+                    'Redirect has occurred but no query or hash parameters were found. ' +
+                    'They were either not set during the redirect, or were removed before Satellizer ' +
+                    'could read them, e.g. AngularJS routing mechanism.'
+                  );
                 }
-
-                Popup.popupWindow.close();
-
                 $interval.cancel(polling);
+                Popup.popupWindow.close();
               }
             } catch (error) {
               // Ignore DOMException: Blocked a frame with origin from accessing a cross-origin frame.
+              // A hack to get around same-origin security policy errors in IE.
             }
-
-            if (!Popup.popupWindow || Popup.popupWindow.closed || Popup.popupWindow.closed === undefined) {
-              $interval.cancel(polling);
-            }
-          }, 50);
-
+          }, 20);
           return deferred.promise;
         };
 
