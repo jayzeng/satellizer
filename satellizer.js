@@ -763,6 +763,11 @@
         return Popup;
       }])
     .service('SatellizerUtils', function() {
+      this.getFullUrlPath = function(location) {
+          return location.protocol + '//' + location.hostname +
+              (location.port ? ':' + location.port : '') + location.pathname;
+      };
+
       this.camelCase = function(name) {
         return name.replace(/([\:\-\_]+(.))/g, function(_, separator, letter, offset) {
           return offset ? letter.toUpperCase() : letter;
